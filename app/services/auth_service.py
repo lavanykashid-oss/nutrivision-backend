@@ -1,7 +1,7 @@
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.utils.password import hash_password, verify_password
-
+from flask_jwt_extended import create_access_token
 
 class AuthService:
 
@@ -52,8 +52,14 @@ class AuthService:
                 "success": False,
                 "message": "Invalid email or password"
             }
+        
+        token = create_access_token(
+            identity=user.id
+        )
 
         return {
             "success": True,
-            "message": "Login successful"
+            "message": "Login successful",
+            "token": token
         }
+    
