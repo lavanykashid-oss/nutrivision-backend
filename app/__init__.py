@@ -16,6 +16,7 @@ from app.models.chat_message import ChatMessage
 from app.models.deficiency_report import DeficiencyReport
 from flask_jwt_extended import JWTManager
 from app.config.config import Config
+from app.routes.food_routes import food_bp
 
 load_dotenv()
 jwt = JWTManager()
@@ -48,6 +49,11 @@ def create_app():
     app.register_blueprint(
         auth_bp,
         url_prefix="/api/v1/auth"
+    )
+
+    app.register_blueprint(
+        food_bp,
+        url_prefix="/api/v1/food"
     )
 
     @app.route("/")
