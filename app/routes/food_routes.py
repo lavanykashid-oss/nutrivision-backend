@@ -70,3 +70,37 @@ def analyze_food():
     
 
     return jsonify(data)
+
+@food_bp.route("/history", methods=["GET"])
+@jwt_required()
+def get_history():
+
+    user_id = get_jwt_identity()
+
+    meals = Meal.query.filter_by(
+        user_id=user_id
+    ).all()
+
+    history = []
+
+    for meal in meals:
+
+        analysis = NutritionAnalysis.query.filter_by(
+            meal_id=meal.id
+        ).first()
+
+        if not analysis:
+            continue
+
+        history.append({
+            "id": meal.id,
+            "meal_name": meal.meal_name,
+            "meal_type": meal.meal_type,
+            "calories": analysis.calories if analysis else 0,
+            "protein": analysis.protein if analysis else 0,
+            "carbs": analysis.carbs if analysis else 0,
+            "fat": analysis.fat if analysis else 0
+            
+        })
+
+    return jsonify(history)
