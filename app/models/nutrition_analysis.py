@@ -25,6 +25,7 @@ class NutritionAnalysis(db.Model):
     sugar = db.Column(db.Float)
 
     sodium = db.Column(db.Float)
+    
 
     vitamin_data = db.Column(db.JSON)
 
