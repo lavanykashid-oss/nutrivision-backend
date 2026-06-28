@@ -106,12 +106,49 @@ def get_history():
             "sugar": analysis.sugar if analysis else 0,
             "sodium": analysis.sodium if analysis else 0,
 
-            "vitamins": analysis.vitamin_data if analysis else []
+            "vitamins": analysis.vitamin_data if analysis else [],
+            "created_at": meal.created_at
 
             
         })
 
     return jsonify(history)
+
+
+@food_bp.route("/history/<int:meal_id>", methods=["DELETE"])
+@jwt_required()
+def delete_meal(meal_id):
+
+    user_id = get_jwt_identity()
+
+    meal = Meal.query.filter_by(
+        id=meal_id,
+        user_id=user_id
+    ).first()
+
+    if not meal:
+        return jsonify({
+            "message": "Meal not found"
+        }), 404
+
+    analysis = NutritionAnalysis.query.filter_by(
+        meal_id=meal.id
+    ).first()
+
+    if analysis:
+        db.session.delete(analysis)
+        db.session.commit()
+
+    db.session.delete(meal)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Meal deleted successfully"
+    })
+
+
+
 
 @food_bp.route("/dashboard", methods=["GET"])
 @jwt_required()
