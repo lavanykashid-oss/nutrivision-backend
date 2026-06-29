@@ -13,6 +13,7 @@ auth_bp = Blueprint(
     "/register",
     methods=["POST"]
 )
+
 def register():
 
     data = request.get_json()
