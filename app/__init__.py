@@ -12,11 +12,15 @@ from app.models.user_goal import UserGoal
 from app.models.meal import Meal
 from app.models.nutrition_analysis import NutritionAnalysis
 from app.models.daily_progress import DailyProgress
-from app.models.chat_message import ChatMessage
 from app.models.deficiency_report import DeficiencyReport
 from flask_jwt_extended import JWTManager
 from app.config.config import Config
 from app.routes.food_routes import food_bp
+from app.routes.coach import coach_bp
+
+from app.models.chat_session import ChatSession
+from app.models.chat_message import ChatMessage
+
 
 load_dotenv()
 jwt = JWTManager()
@@ -55,6 +59,11 @@ def create_app():
         food_bp,
         url_prefix="/api/v1/food"
     )
+
+    app.register_blueprint(
+    coach_bp,
+    url_prefix="/api/v1/coach"
+)
 
     @app.route("/")
     def home():

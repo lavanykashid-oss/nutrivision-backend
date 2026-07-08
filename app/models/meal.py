@@ -7,6 +7,8 @@ class Meal(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
+    
+
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
@@ -17,8 +19,10 @@ class Meal(db.Model):
         db.String(150),
         nullable=False
     )
+    
+    
 
-    image_url = db.Column(db.Text)
+    image_url = db.Column(db.String(500), nullable=True)
 
     meal_type = db.Column(db.String(50))
 
@@ -28,3 +32,10 @@ class Meal(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+
+    analysis = db.relationship(
+    "NutritionAnalysis",
+    back_populates="meal",
+    uselist=False,
+    cascade="all, delete-orphan"
+)

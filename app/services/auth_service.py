@@ -1,7 +1,11 @@
 from app.models.user import User
+from app.models.user_goal import UserGoal
 from app.repositories.user_repository import UserRepository
 from app.utils.password import hash_password, verify_password
 from flask_jwt_extended import create_access_token
+from app.config.database import db
+from datetime import datetime
+
 
 class AuthService:
 
@@ -17,20 +21,42 @@ class AuthService:
                 "success": False,
                 "message": "Email already exists"
             }
+        
+        dob = None
+
+        if data.get("dob"):
+          dob = datetime.strptime(
+          data["dob"],
+          "%Y-%m-%d"
+        ).date()
 
         user = User(
             full_name=data["full_name"],
             email=data["email"],
-            password_hash=hash_password(data["password"])
+            password_hash=hash_password(data["password"]),
+            dob=dob,
+            age=data.get("age"),
+            weight=data.get("weight"),
+            # height=data.get("height"),
+            # gender=data.get("gender")
         )
 
-        UserRepository.create_user(user)
+        db.session.add(user)
+        db.session.flush()      # Generates user.id without committing
+
+        goal = UserGoal(
+            user_id=user.id,
+            goal_type=data.get("goal")
+        )
+
+        db.session.add(goal)
+        db.session.commit()
 
         return {
             "success": True,
             "message": "User registered successfully"
         }
-
+    
     @staticmethod
     def login_user(data):
 
@@ -52,7 +78,7 @@ class AuthService:
                 "success": False,
                 "message": "Invalid email or password"
             }
-        
+
         token = create_access_token(
             identity=str(user.id)
         )

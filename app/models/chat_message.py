@@ -1,21 +1,28 @@
 from datetime import datetime
 from app.config.database import db
 
+
 class ChatMessage(db.Model):
 
     __tablename__ = "chat_messages"
 
     id = db.Column(db.Integer, primary_key=True)
 
-    user_id = db.Column(
+    session_id = db.Column(
         db.Integer,
-        db.ForeignKey("users.id"),
+        db.ForeignKey("chat_sessions.id"),
         nullable=False
     )
 
-    user_message = db.Column(db.Text)
+    role = db.Column(
+        db.String(20),
+        nullable=False
+    )
 
-    ai_response = db.Column(db.Text)
+    message = db.Column(
+        db.Text,
+        nullable=False
+    )
 
     created_at = db.Column(
         db.DateTime,

@@ -2,6 +2,9 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth_service import AuthService
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.models.user import User
+from app.models.user_goal import UserGoal
+
 
 auth_bp = Blueprint(
     "auth",
@@ -17,6 +20,7 @@ auth_bp = Blueprint(
 def register():
 
     data = request.get_json()
+    print(data)
 
     result = AuthService.register_user(data)
 
@@ -43,7 +47,20 @@ def profile():
 
     user_id = get_jwt_identity()
 
-    return {
-        "success": True,
-        "user_id": user_id
-    }
+    user = User.query.get(user_id)
+
+    goal = UserGoal.query.filter_by(
+        user_id = user_id
+    ).first()
+
+    return jsonify({
+    "name": user.full_name,
+    "email": user.email,
+    "goal": goal.goal_type if goal else "Not set",
+    "age": user.age,
+    "dob": user.dob,
+    # "gender": user.gender,
+    # "height": user.height,
+    "weight": user.weight,
+    
+})

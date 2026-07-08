@@ -3,72 +3,319 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.meal import Meal
 from app.config.database import db
 from app.models.nutrition_analysis import NutritionAnalysis
-from sqlalchemy import func
+
+from PIL import Image
+from app.services.ai_service import AIService
+import imagehash
+
+from datetime import datetime, timedelta
+
+import os
+import uuid
+from werkzeug.utils import secure_filename
+
+
+from app.utils.image_hash import generate_image_hash
+from app.utils.perceptual_hash import generate_phash
+
+
+
 
 food_bp = Blueprint(
     "food",
     __name__
 )
-
-
-@food_bp.route("/analyze",methods=["POST"])
-@jwt_required()
-def analyze_food():
-
-    
-
-    image = request.files.get("image")
-
-    food_name = request.form.get("food_name")
-    user_id = get_jwt_identity()
-
-    
-    data = {
-    "name": "Apple",
-    "calories": 95,
-    "protein": 0.5,
-    "carbs": 25,
-    "fat": 0.3,
-    "fiber": 4.4,
-    "sugar": 19,
-    "sodium": 1,
-    "vitamins": ["Vitamin C"],
-    "healthScore": 90,
-    "servingSize": "1 medium apple",
-    "tags": ["Healthy"]
-}
-
+def save_cached_analysis(user_id, cached, image_hash, perceptual_hash):
 
     meal = Meal(
-    user_id=user_id,
-    meal_name=food_name,
-    meal_type="Snack"
-)
+        user_id=user_id,
+        meal_name=cached.meal.meal_name,
+        meal_type=cached.meal_type_ai
+    )
 
     db.session.add(meal)
     db.session.commit()
 
     analysis = NutritionAnalysis(
-    meal_id=meal.id,
-    calories=data["calories"],
-    protein=data["protein"],
-    fat=data["fat"],
-    carbs=data["carbs"],
-    fiber=data["fiber"],
-    sugar=data["sugar"],
-    sodium=data["sodium"],
-    vitamin_data=data["vitamins"],
-    mineral_data=[]
-)
+        meal_id=meal.id,
+
+        image_hash=image_hash,
+        perceptual_hash=perceptual_hash,
+
+        calories=cached.calories,
+        protein=cached.protein,
+        carbs=cached.carbs,
+        fat=cached.fat,
+        fiber=cached.fiber,
+        sugar=cached.sugar,
+        sodium=cached.sodium,
+
+        vitamin_data=cached.vitamin_data,
+        mineral_data=cached.mineral_data,
+
+        confidence=cached.confidence,
+        meal_type_ai=cached.meal_type_ai,
+        serving_size=cached.serving_size,
+        health_score=cached.health_score,
+        health_tips=cached.health_tips,
+        warnings=cached.warnings,
+        tags=cached.tags
+    )
 
     db.session.add(analysis)
     db.session.commit()
 
-    print("Image:", image)
-    print("Food Name:", food_name)
-    print("meal id:", meal.id)
+    return jsonify({
+        "name": meal.meal_name,
+        "confidence": analysis.confidence,
+        "mealType": analysis.meal_type_ai,
+        "servingSize": analysis.serving_size,
 
-    
+        "calories": analysis.calories,
+        "protein": analysis.protein,
+        "carbs": analysis.carbs,
+        "fat": analysis.fat,
+        "fiber": analysis.fiber,
+        "sugar": analysis.sugar,
+        "sodium": analysis.sodium,
+
+        "vitamins": analysis.vitamin_data,
+        "minerals": analysis.mineral_data,
+
+        "healthScore": analysis.health_score,
+        "healthTips": analysis.health_tips,
+        "warnings": analysis.warnings,
+        "tags": analysis.tags,
+
+        "cached": True
+    })
+
+
+@food_bp.route("/analyze", methods=["POST"])
+@jwt_required()
+def analyze_food():
+
+    image_hash = None
+    perceptual_hash = None
+
+    image = request.files.get("image")
+    food_name = request.form.get("food_name")
+    image_path = None
+
+    user_id = get_jwt_identity()
+
+    if not image and not food_name:
+        return jsonify({
+            "message": "Please upload an image or enter a food name."
+        }), 400
+
+    # --------------------------------------------------
+    # Exact Image Cache
+    # --------------------------------------------------
+
+    if image:
+
+        upload_folder = os.path.join("uploads", "meals")
+        os.makedirs(upload_folder, exist_ok=True)
+
+        extension = os.path.splitext(image.filename)[1]
+
+        filename = f"{uuid.uuid4()}{extension}"
+
+        filepath = os.path.join(upload_folder, filename)
+
+        image.save(filepath)
+
+        image.seek(0)
+
+        image_path = f"uploads/meals/{filename}"
+
+        image_hash = generate_image_hash(image)
+        perceptual_hash = generate_phash(image)
+
+        cached = NutritionAnalysis.query.filter_by(
+            image_hash=image_hash
+        ).first()
+
+        if cached:
+            return save_cached_analysis(
+                user_id,
+                cached,
+                image_hash,
+                perceptual_hash
+            )
+
+    # --------------------------------------------------
+    # Prompt
+    # --------------------------------------------------
+
+    prompt = f"""
+You are NutriVision AI.
+
+If an image is provided, analyze the image.
+
+If only a food name is provided, estimate nutrition using the food name.
+
+Food:
+{food_name}
+
+Return ONLY valid JSON.
+
+Schema:
+
+{{
+  "name": "",
+  "confidence": 0,
+  "mealType": "",
+  "servingSize": "",
+
+  "calories": 0,
+  "protein": 0,
+  "carbs": 0,
+  "fat": 0,
+  "fiber": 0,
+  "sugar": 0,
+  "sodium": 0,
+
+  "vitamins": [],
+  "minerals": [],
+
+  "healthScore": 0,
+
+  "healthTips": [],
+
+  "warnings": [],
+
+  "tags": []
+}}
+
+Requirements:
+
+- confidence: integer (0-100)
+- healthScore: integer (0-100)
+- mealType: Breakfast, Lunch, Dinner, Snack or Drink
+- healthTips: exactly 2 (maximum 4 words each)
+- warnings: maximum 2
+- vitamins: maximum 2
+- minerals: maximum 2
+- tags: maximum 3
+
+Estimate nutrition realistically.
+
+If no food is detected return:
+
+{{
+    "error":"NO_FOOD_DETECTED"
+}}
+"""
+
+    # --------------------------------------------------
+    # Similar Image Cache
+    # --------------------------------------------------
+
+    if image:
+
+        current_hash = imagehash.hex_to_hash(perceptual_hash)
+
+        all_hashes = NutritionAnalysis.query.all()
+
+        cached = None
+
+        for item in all_hashes:
+
+            if not item.perceptual_hash:
+                continue
+
+            db_hash = imagehash.hex_to_hash(item.perceptual_hash)
+
+            distance = current_hash - db_hash
+
+            if distance <= 5:
+                cached = item
+                break
+
+        if cached:
+            return save_cached_analysis(
+                user_id,
+                cached,
+                image_hash,
+                perceptual_hash
+            )
+
+    # --------------------------------------------------
+    # AI Request
+    # --------------------------------------------------
+
+    try:
+
+        if image:
+
+            data = AIService.generate_json(
+                prompt=prompt,
+                image=image
+            )
+
+        else:
+
+            data = AIService.generate_json(
+                prompt=prompt
+            )
+
+    except Exception as e:
+
+        print(e)
+
+        return jsonify({
+            "message": "AI analysis failed"
+        }), 500
+
+    # --------------------------------------------------
+    # Save Meal
+    # --------------------------------------------------
+
+    meal = Meal(
+        user_id=user_id,
+        meal_name=data.get("name") or food_name or "Unknown Food",
+        meal_type=data.get("mealType", "Snack"),
+        image_url=image_path
+    )
+
+    db.session.add(meal)
+    db.session.commit()
+
+    # --------------------------------------------------
+    # Save Analysis
+    # --------------------------------------------------
+
+    analysis = NutritionAnalysis(
+
+        meal_id=meal.id,
+
+        image_hash=image_hash,
+        perceptual_hash=perceptual_hash,
+
+        calories=data.get("calories", 0),
+        protein=data.get("protein", 0),
+        carbs=data.get("carbs", 0),
+        fat=data.get("fat", 0),
+        fiber=data.get("fiber", 0),
+        sugar=data.get("sugar", 0),
+        sodium=data.get("sodium", 0),
+
+        vitamin_data=data.get("vitamins", []),
+        mineral_data=data.get("minerals", []),
+
+        confidence=data.get("confidence", 0),
+        meal_type_ai=data.get("mealType", ""),
+        serving_size=data.get("servingSize", ""),
+        health_score=data.get("healthScore", 0),
+        health_tips=data.get("healthTips", []),
+        warnings=data.get("warnings", []),
+        tags=data.get("tags", [])
+    )
+
+    db.session.add(analysis)
+    db.session.commit()
 
     return jsonify(data)
 
@@ -94,23 +341,32 @@ def get_history():
             continue
 
         history.append({
-            "id": meal.id,
-            "meal_name": meal.meal_name,
-            "meal_type": meal.meal_type,
-            "calories": analysis.calories if analysis else 0,
-            "protein": analysis.protein if analysis else 0,
-            "carbs": analysis.carbs if analysis else 0,
-            "fat": analysis.fat if analysis else 0,
+    "id": meal.id,
 
-            "fiber": analysis.fiber if analysis else 0,
-            "sugar": analysis.sugar if analysis else 0,
-            "sodium": analysis.sodium if analysis else 0,
+    "meal_name": meal.meal_name,
+    "meal_type": analysis.meal_type_ai,
 
-            "vitamins": analysis.vitamin_data if analysis else [],
-            "created_at": meal.created_at
+    "calories": analysis.calories,
+    "protein": analysis.protein,
+    "carbs": analysis.carbs,
+    "fat": analysis.fat,
+    "fiber": analysis.fiber,
+    "sugar": analysis.sugar,
+    "sodium": analysis.sodium,
 
-            
-        })
+    "vitamins": analysis.vitamin_data,
+    "minerals": analysis.mineral_data,
+
+    "confidence": analysis.confidence,
+    "mealTypeAI": analysis.meal_type_ai,
+    "servingSize": analysis.serving_size,
+    "healthScore": analysis.health_score,
+    "healthTips": analysis.health_tips,
+    "warnings": analysis.warnings,
+    "tags": analysis.tags,
+
+    "created_at": meal.created_at
+})
 
     return jsonify(history)
 
@@ -180,7 +436,17 @@ def dashboard():
     {"day": "Fri", "calories": 0, "protein": 0},
     {"day": "Sat", "calories": 0, "protein": 0},
     {"day": "Sun", "calories": 0, "protein": 0},
+
+    
 ]
+    
+    today = datetime.utcnow().date()
+    week_start = today - timedelta(days=6)
+
+    tracked_days = set()
+
+    weekly_calories = 0
+    weekly_protein = 0
 
     for meal in meals:
 
@@ -189,6 +455,16 @@ def dashboard():
         ).first()
 
         if analysis:
+
+            meal_date = meal.created_at.date()
+
+            if meal_date >= week_start:
+
+                tracked_days.add(meal_date)
+
+                weekly_calories += analysis.calories or 0
+
+                weekly_protein += analysis.protein or 0
 
             score = 100
 
@@ -223,7 +499,8 @@ def dashboard():
             recent_meals.append({
                 "meal_name": meal.meal_name,
                 "calories": analysis.calories,
-                "protein": analysis.protein
+                "protein": analysis.protein,
+                "image_url": meal.image_url
             })
 
     avg_health_score = (
@@ -231,6 +508,23 @@ def dashboard():
         if health_scores
         else 0
 )
+    
+    days_tracked = len(tracked_days)
+
+    if days_tracked > 0:
+
+        avg_calories = round(
+           weekly_calories / days_tracked
+        )
+
+        avg_protein = round(
+           weekly_protein / days_tracked
+        )
+
+    else:
+
+         avg_calories = 0
+         avg_protein = 0
 
    
 
@@ -247,7 +541,15 @@ def dashboard():
         "recent_meals": recent_meals[-5:],
         "weekly_data": weekly_data,
 
-        "health_score": avg_health_score
+        "health_score": avg_health_score,
+
+
+        "avg_calories": avg_calories,
+        "avg_protein": avg_protein,
+        "days_tracked": days_tracked,
+
+
+
 
         
     })

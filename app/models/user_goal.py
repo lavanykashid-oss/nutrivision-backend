@@ -14,8 +14,4 @@ class UserGoal(db.Model):
 
     goal_type = db.Column(db.String(50))
 
-    target_weight = db.Column(db.Float)
-
-    target_calories = db.Column(db.Integer)
-
-    activity_level = db.Column(db.String(50))
+   

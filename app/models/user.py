@@ -22,9 +22,11 @@ class User(db.Model):
 
     age = db.Column(db.Integer)
 
-    gender = db.Column(db.String(20))
+    dob = db.Column(db.Date)
 
-    height = db.Column(db.Float)
+    # gender = db.Column(db.String(20))
+
+    # height = db.Column(db.Float)
 
     weight = db.Column(db.Float)
 
