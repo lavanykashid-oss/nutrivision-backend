@@ -72,60 +72,53 @@ class ClaudeProvider:
         return "".join(text_parts).strip()
         
 
+    def generate_json(self, prompt, image=None):
+
+        if image:
+
+          image_data = self.encode_image(image)
+
+          response = self.client.messages.create(
+            model="claude-sonnet-5",
+            max_tokens=2048,
+            messages=[
+                {
+                    "role": "user",
+                    "content":[
+                        {
+                            "type":"image",
+                            "source":{
+                                "type":"base64",
+                                "media_type":"image/jpeg",
+                                "data":image_data
+                            }
+                        },
+                        {
+                            "type":"text",
+                            "text":prompt
+                        }
+                    ]
+                }
+            ]
+        )
+
+        else:
+
+           response = self.client.messages.create(
+            model="claude-sonnet-5",
+            max_tokens=2048,
+            messages=[
+                {
+                    "role":"user",
+                    "content":prompt
+                }
+            ]
+        )
+
 
         
 
-    def generate_json(self, prompt, image=None):
-
-        image_data = self.encode_image(image)
-
-        content_type = "image/jpeg"
-
     
-
-        response = self.client.messages.create(
-
-            model="claude-sonnet-5",
-
-            max_tokens=2048,
-
-            messages=[
-
-                {
-                    "role": "user",
-
-                    "content": [
-
-                        {
-                            "type": "image",
-
-                            "source": {
-
-                                "type": "base64",
-
-                                "media_type": content_type,
-
-                                "data": image_data
-
-                            }
-
-                        },
-
-                        {
-
-                            "type": "text",
-
-                            "text": prompt
-
-                        }
-
-                    ]
-
-                }
-
-            ]
-
-        )
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
