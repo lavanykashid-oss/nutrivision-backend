@@ -27,6 +27,7 @@ def upgrade():
     sa.Column('gender', sa.String(length=20), nullable=True),
     sa.Column('height', sa.Float(), nullable=True),
     sa.Column('weight', sa.Float(), nullable=True),
+    
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
