@@ -15,7 +15,7 @@ class GeminiProvider:
     def generate_text(self, prompt):
 
         response = self.client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash-lite",
             contents=prompt
         )
 
@@ -30,7 +30,7 @@ class GeminiProvider:
             uploaded_image = Image.open(image)
 
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-flash-lite",
                 contents=[
                    prompt,
                    uploaded_image
@@ -40,7 +40,7 @@ class GeminiProvider:
         else:
 
            response = self.client.models.generate_content(
-              model="gemini-2.5-flash",
+              model="gemini-2.5-flash-lite",
               contents=prompt
         )
 
