@@ -500,7 +500,7 @@ def dashboard():
                 "meal_name": meal.meal_name,
                 "calories": analysis.calories,
                 "protein": analysis.protein,
-                "image_url": meal.image_url
+                "image_url": f"{request.host_url}{meal.image_url}"
             })
 
     avg_health_score = (
