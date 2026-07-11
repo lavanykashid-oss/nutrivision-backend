@@ -10,6 +10,9 @@ import imagehash
 
 from datetime import datetime, timedelta
 
+import cloudinary.uploader
+from app.config.cloudinary_config import *
+
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -115,20 +118,29 @@ def analyze_food():
 
     if image:
 
-        upload_folder = os.path.join("uploads", "meals")
-        os.makedirs(upload_folder, exist_ok=True)
+        # upload_folder = os.path.join("uploads", "meals")
+        # os.makedirs(upload_folder, exist_ok=True)
 
-        extension = os.path.splitext(image.filename)[1]
+        # extension = os.path.splitext(image.filename)[1]
 
-        filename = f"{uuid.uuid4()}{extension}"
+        # filename = f"{uuid.uuid4()}{extension}"
 
-        filepath = os.path.join(upload_folder, filename)
+        # filepath = os.path.join(upload_folder, filename)
 
-        image.save(filepath)
+        # image.save(filepath)
+
+        # image.seek(0)
+
+        # image_path = f"uploads/meals/{filename}"
+        result = cloudinary.uploader.upload(
+          image,
+          folder="nutrivision/meals"
+)
+
+        image_path = result["secure_url"]
 
         image.seek(0)
 
-        image_path = f"uploads/meals/{filename}"
 
         image_hash = generate_image_hash(image)
         perceptual_hash = generate_phash(image)
