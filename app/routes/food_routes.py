@@ -33,7 +33,8 @@ def save_cached_analysis(user_id, cached, image_hash, perceptual_hash):
     meal = Meal(
         user_id=user_id,
         meal_name=cached.meal.meal_name,
-        meal_type=cached.meal_type_ai
+        meal_type=cached.meal_type_ai,
+        image_url=cached.meal.image_url
     )
 
     db.session.add(meal)
@@ -376,6 +377,7 @@ def get_history():
     "healthTips": analysis.health_tips,
     "warnings": analysis.warnings,
     "tags": analysis.tags,
+    "image_url": meal.image_url,
 
     "created_at": meal.created_at
 })
