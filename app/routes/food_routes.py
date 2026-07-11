@@ -496,11 +496,12 @@ def dashboard():
             weekly_data[day_index]["calories"] += analysis.calories or 0
             weekly_data[day_index]["protein"] += analysis.protein or 0
 
+            print("image url from db :", meal.image_url)
             recent_meals.append({
                 "meal_name": meal.meal_name,
                 "calories": analysis.calories,
                 "protein": analysis.protein,
-                "image_url": f"{request.host_url}{meal.image_url}"
+                "image_url": meal.image_url
             })
 
     avg_health_score = (
