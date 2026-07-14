@@ -9,6 +9,11 @@ class User(db.Model):
 
     full_name = db.Column(db.String(100), nullable=False)
 
+   
+    
+
+    
+
     email = db.Column(
         db.String(120),
         unique=True,
@@ -17,8 +22,25 @@ class User(db.Model):
 
     password_hash = db.Column(
         db.String(255),
-        nullable=False
+        nullable=True
     )
+
+    google_id = db.Column(
+    db.String(255),
+    unique=True,
+    nullable=True
+)
+
+    profile_picture = db.Column(
+      db.String(500),
+      nullable=True
+)
+
+    provider = db.Column(
+      db.String(20),
+      default="local",
+      nullable=False
+)
 
     age = db.Column(db.Integer)
 

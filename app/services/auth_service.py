@@ -88,4 +88,43 @@ class AuthService:
             "message": "Login successful",
             "token": token
         }
-    
+    @staticmethod
+    def complete_profile(user_id, data):
+
+        user = User.query.get(user_id)
+
+        if not user:
+            return {
+                "success": False,
+                "message": "User not found"
+            }
+
+        dob = None
+        if data.get("dob"):
+            dob = datetime.strptime(
+                data["dob"],
+                "%Y-%m-%d"
+            ).date()
+
+        user.dob = dob
+        user.age = data.get("age")
+        user.weight = data.get("weight")
+
+        # Update goal
+        goal = UserGoal.query.filter_by(user_id=user.id).first()
+
+        if goal:
+            goal.goal_type = data.get("goal")
+        else:
+            goal = UserGoal(
+                user_id=user.id,
+                goal_type=data.get("goal")
+            )
+            db.session.add(goal)
+
+        db.session.commit()
+
+        return {
+            "success": True,
+            "message": "Profile completed successfully"
+        }

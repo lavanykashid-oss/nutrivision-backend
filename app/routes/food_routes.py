@@ -102,6 +102,10 @@ def analyze_food():
     image_hash = None
     perceptual_hash = None
 
+    food_name = request.form.get("food_name")
+    description = request.form.get("description", "")
+   
+
     image = request.files.get("image")
     food_name = request.form.get("food_name")
     image_path = None
@@ -171,6 +175,9 @@ If only a food name is provided, estimate nutrition using the food name.
 
 Food:
 {food_name}
+
+Additional Description
+{description}
 
 Return ONLY valid JSON.
 
