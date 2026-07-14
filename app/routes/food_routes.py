@@ -480,19 +480,9 @@ def dashboard():
 
                 weekly_protein += analysis.protein or 0
 
-            score = 100
-
-            if analysis.calories and analysis.calories > 500:
-                  score -= 10
-
-            if analysis.sugar and analysis.sugar > 25:
-                   score -= 10
-
-            if analysis.fiber and analysis.fiber > 3:
-              score += 5
-
-            score = min(score,100)
-            health_scores.append(score)
+            health_scores.append(
+    analysis.health_score or 0
+)
 
 
             

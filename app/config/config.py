@@ -1,8 +1,8 @@
+from datetime import timedelta
 import os
 
 class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SECRET_KEY = os.getenv(
@@ -14,3 +14,5 @@ class Config:
         "JWT_SECRET_KEY",
         "nutrivision-jwt-secret-key"
     )
+
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
