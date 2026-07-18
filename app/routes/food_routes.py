@@ -431,12 +431,56 @@ def delete_meal(meal_id):
 @jwt_required()
 def dashboard():
 
+    selected_date = request.args.get("date")
+    selected_weekday = request.args.get("weekday")
+
     user_id = get_jwt_identity()
 
-    meals = Meal.query.filter_by(
-        user_id=user_id
-    ).all()
+    query = Meal.query.filter_by(user_id=user_id)
 
+    today = datetime.utcnow().date()
+
+    if selected_date:
+
+     selected_date = datetime.strptime(
+        selected_date,
+        "%Y-%m-%d"
+     ).date()
+
+     query = query.filter(
+        db.func.date(Meal.created_at) == selected_date
+     )
+
+    elif selected_weekday:
+
+      weekday_map = {
+        "Monday": 0,
+        "Tuesday": 1,
+        "Wednesday": 2,
+        "Thursday": 3,
+        "Friday": 4,
+        "Saturday": 5,
+        "Sunday": 6,
+      }
+
+      current_week_start = today - timedelta(days=today.weekday())
+
+      target_date = current_week_start + timedelta(
+        days=weekday_map[selected_weekday]
+      )
+
+      query = query.filter(
+        db.func.date(Meal.created_at) == target_date
+       )
+
+    else:
+
+     query = query.filter(
+        db.func.date(Meal.created_at) == today
+    )
+
+    meals = query.all()
+   
     total_calories = 0
     total_protein = 0
     total_carbs = 0
@@ -461,8 +505,27 @@ def dashboard():
     
 ]
     
-    today = datetime.utcnow().date()
-    week_start = today - timedelta(days=6)
+    # today = datetime.utcnow().date()
+    # week_start = today - timedelta(days=6)
+    if selected_date:
+      base_date = selected_date
+
+    elif selected_weekday:
+      base_date = target_date
+
+    else:
+      base_date = datetime.utcnow().date()
+
+    week_start = base_date - timedelta(days=base_date.weekday())
+    week_end = week_start + timedelta(days=6)
+    weekly_meals = (
+    Meal.query.filter_by(user_id=user_id)
+    .filter(
+        db.func.date(Meal.created_at) >= week_start,
+        db.func.date(Meal.created_at) <= week_end
+    )
+    .all()
+)
 
     tracked_days = set()
 
@@ -471,25 +534,13 @@ def dashboard():
 
     for meal in meals:
 
-        analysis = NutritionAnalysis.query.filter_by(
-            meal_id=meal.id
-        ).first()
+      analysis = NutritionAnalysis.query.filter_by(
+        meal_id=meal.id
+    ).first()
 
-        if analysis:
-
-            meal_date = meal.created_at.date()
-
-            if meal_date >= week_start:
-
-                tracked_days.add(meal_date)
-
-                weekly_calories += analysis.calories or 0
-
-                weekly_protein += analysis.protein or 0
-
-            health_scores.append(
-    analysis.health_score or 0
-)
+      if analysis:
+            
+            
 
 
             
@@ -502,18 +553,36 @@ def dashboard():
             total_sugar += analysis.sugar or 0
             total_sodium += analysis.sodium or 0
 
-            day_index = meal.created_at.weekday()
+            
+            health_scores.append(analysis.health_score or 0)
 
-            weekly_data[day_index]["calories"] += analysis.calories or 0
-            weekly_data[day_index]["protein"] += analysis.protein or 0
-
-            print("image url from db :", meal.image_url)
+            # print("image url from db :", meal.image_url)
             recent_meals.append({
                 "meal_name": meal.meal_name,
                 "calories": analysis.calories,
                 "protein": analysis.protein,
                 "image_url": meal.image_url
             })
+
+    for meal in weekly_meals:
+
+      analysis = NutritionAnalysis.query.filter_by(
+        meal_id=meal.id
+    ).first()
+
+      if analysis:
+
+        tracked_days.add(meal.created_at.date())
+
+        weekly_calories += analysis.calories or 0
+        weekly_protein += analysis.protein or 0
+        day_index = meal.created_at.weekday()
+
+        weekly_data[day_index]["calories"] += analysis.calories or 0
+        weekly_data[day_index]["protein"] += analysis.protein or 0
+
+
+        
 
     avg_health_score = (
         round(sum(health_scores) / len(health_scores))
