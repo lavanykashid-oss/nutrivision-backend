@@ -514,7 +514,7 @@ def dashboard():
       base_date = target_date
 
     else:
-      base_date = datetime.utcnow().date()
+      base_date = today
 
     week_start = base_date - timedelta(days=base_date.weekday())
     week_end = week_start + timedelta(days=6)
