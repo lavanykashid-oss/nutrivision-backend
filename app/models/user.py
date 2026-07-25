@@ -44,7 +44,7 @@ class User(db.Model):
 
     age = db.Column(db.Integer)
 
-    gender = db.Column(db.String(20))
+    dob = db.Column(db.Date)
 
     # gender = db.Column(db.String(20))
 
