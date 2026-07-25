@@ -34,11 +34,11 @@ class AuthService:
             full_name=data["full_name"],
             email=data["email"],
             password_hash=hash_password(data["password"]),
-            dob=dob,
+            #dob=dob,
             age=data.get("age"),
             weight=data.get("weight"),
             # height=data.get("height"),
-            # gender=data.get("gender")
+            gender=data.get("gender"),
         )
 
         db.session.add(user)
@@ -108,6 +108,7 @@ class AuthService:
 
         user.dob = dob
         user.age = data.get("age")
+        user.gender = data.get("gender")
         user.weight = data.get("weight")
 
         # Update goal
