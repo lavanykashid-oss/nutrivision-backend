@@ -63,8 +63,8 @@ def profile():
     "email": user.email,
     "goal": goal.goal_type if goal else "Not set",
     "age": user.age,
-    "dob": user.dob,
-    # "gender": user.gender,
+    # "dob": user.dob,
+    "gender": user.gender,
     # "height": user.height,
     "weight": user.weight,
     
