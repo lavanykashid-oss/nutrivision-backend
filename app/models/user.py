@@ -56,3 +56,8 @@ class User(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+    health_reports = db.relationship(
+    "HealthReport",
+    back_populates="user",
+    cascade="all, delete-orphan"
+)

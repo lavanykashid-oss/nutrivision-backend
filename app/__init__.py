@@ -21,6 +21,16 @@ from app.routes.coach import coach_bp
 from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
 
+from app.models.user import User
+from app.models.health_report import HealthReport
+from app.models.parameter_master import ParameterMaster
+from app.models.parameter_alias import ParameterAlias
+from app.models.health_parameter import HealthParameter
+from app.models.health_analysis import HealthAnalysis
+from app.routes.health_report_routes import health_report_bp
+from app.models.food_master import FoodMaster
+from app.models.meal_recipe import MealRecipe
+from app.models.diet_plan import DietPlan
 
 load_dotenv()
 jwt = JWTManager()
@@ -55,6 +65,10 @@ def create_app():
     app.register_blueprint(
     coach_bp,
     url_prefix="/api/v1/coach"
+)
+    app.register_blueprint(
+    health_report_bp,
+    url_prefix="/api/v1/health"
 )
 
     @app.route("/")

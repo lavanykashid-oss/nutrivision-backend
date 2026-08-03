@@ -21,8 +21,17 @@ from werkzeug.utils import secure_filename
 from app.utils.image_hash import generate_image_hash
 from app.utils.perceptual_hash import generate_phash
 
+from app.models.health_report import HealthReport
+from app.services.food_recommendation_service import FoodRecommendationService
+
+from app.services.diet_plan_service import DietPlanService
+
+from app.services.meal_planner_service import MealPlannerService
 
 
+
+from app.services.ai_diet_service import AIDietService
+from app.services.daily_diet_service import DailyDietService
 
 food_bp = Blueprint(
     "food",
@@ -634,3 +643,110 @@ def dashboard():
 
         
     })
+
+
+
+
+@food_bp.route("/recommendations/<int:report_id>",methods=["GET"])
+@jwt_required()
+def get_recommendations(report_id):
+
+    user_id = get_jwt_identity()
+
+    report = HealthReport.query.get(report_id)
+
+    if not report:
+        return jsonify({
+            "message": "Report not found"
+        }), 404
+
+    if report.user_id != int(user_id):
+        return jsonify({
+            "message": "Unauthorized"
+        }), 403
+
+    recommendations = FoodRecommendationService.get_recommendations(
+        report_id
+    )
+
+    return jsonify(recommendations)
+
+
+
+@food_bp.route(
+    "/diet-plan/<int:report_id>",
+    methods=["GET"]
+)
+@jwt_required()
+def diet_plan(report_id):
+
+    user_id = get_jwt_identity()
+
+    report = HealthReport.query.get(report_id)
+
+    if not report:
+        return jsonify({
+            "message": "Report not found"
+        }), 404
+
+    if report.user_id != int(user_id):
+        return jsonify({
+            "message": "Unauthorized"
+        }), 403
+
+    meal_plan = DietPlanService.generate(report)
+
+    return jsonify(meal_plan), 200
+
+
+@food_bp.route(
+    "/meal-plan/<int:report_id>",
+    methods=["GET"]
+)
+@jwt_required()
+def meal_plan(report_id):
+
+    user_id = get_jwt_identity()
+
+    report = HealthReport.query.get(report_id)
+
+    if not report:
+        return jsonify({
+            "message": "Report not found"
+        }), 404
+
+    if report.user_id != int(user_id):
+        return jsonify({
+            "message": "Unauthorized"
+        }), 403
+
+    plan = MealPlannerService.generate(report)
+
+    return jsonify(plan), 200
+
+
+@food_bp.route(
+    "/ai-diet/<int:report_id>",
+    methods=["GET"]
+)
+@jwt_required()
+def ai_diet(report_id):
+
+    user_id = get_jwt_identity()
+
+    report = HealthReport.query.get(report_id)
+
+    if not report:
+        return jsonify({"message": "Report not found"}), 404
+
+    if report.user_id != int(user_id):
+        return jsonify({"message": "Unauthorized"}), 403
+
+    daily_plan = DailyDietService.generate(report)
+
+    result = AIDietService.generate(
+        report,
+        daily_plan
+    )
+
+    return jsonify(result)
