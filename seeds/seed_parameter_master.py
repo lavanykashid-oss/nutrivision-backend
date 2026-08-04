@@ -1,19 +1,19 @@
-import sys
-import os
+# import sys
+# import os
 
-sys.path.append(
-    os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
-)
-from app import create_app
+# sys.path.append(
+#     os.path.dirname(
+#         os.path.dirname(os.path.abspath(__file__))
+#     )
+# )
+# from app import create_app
 from app.config.database import db
 
 from app.models.parameter_master import ParameterMaster
 from app.models.parameter_alias import ParameterAlias
 
 
-app = create_app()
+# app = create_app()
 
 
 CBC_PARAMETERS = [
@@ -186,8 +186,7 @@ CBC_PARAMETERS = [
 
 ]
 
-
-with app.app_context():
+def seed_parameters():
 
     for item in CBC_PARAMETERS:
 
@@ -195,41 +194,85 @@ with app.app_context():
             parameter_name=item["name"]
         ).first()
 
-        if existing:
-            print(f"Skipping {item['name']}")
-            continue
+        if not existing:
 
-        parameter = ParameterMaster(
+            parameter = ParameterMaster(
+                parameter_name=item["name"],
+                category=item["category"],
+                unit=item["unit"],
+                normal_min=item["min"],
+                normal_max=item["max"]
+            )
 
-            parameter_name=item["name"],
+            db.session.add(parameter)
+            db.session.flush()
 
-            category=item["category"],
-
-            unit=item["unit"],
-
-            normal_min=item["min"],
-
-            normal_max=item["max"]
-
-        )
-
-        db.session.add(parameter)
-        db.session.flush()
+        else:
+            parameter = existing
 
         for alias in item["aliases"]:
 
-            db.session.add(
+            alias_exists = ParameterAlias.query.filter_by(
+                alias=alias
+            ).first()
 
-                ParameterAlias(
+            if not alias_exists:
 
-                    parameter_id=parameter.id,
-
-                    alias=alias
-
+                db.session.add(
+                    ParameterAlias(
+                        parameter_id=parameter.id,
+                        alias=alias
+                    )
                 )
-
-            )
 
     db.session.commit()
 
-    print("CBC Parameter Master Seeded Successfully.")
+    print("Parameter master seeded.")
+
+
+# with app.app_context():
+
+#     for item in CBC_PARAMETERS:
+
+#         existing = ParameterMaster.query.filter_by(
+#             parameter_name=item["name"]
+#         ).first()
+
+#         if existing:
+#             print(f"Skipping {item['name']}")
+#             continue
+
+#         parameter = ParameterMaster(
+
+#             parameter_name=item["name"],
+
+#             category=item["category"],
+
+#             unit=item["unit"],
+
+#             normal_min=item["min"],
+
+#             normal_max=item["max"]
+
+#         )
+
+#         db.session.add(parameter)
+#         db.session.flush()
+
+#         for alias in item["aliases"]:
+
+#             db.session.add(
+
+#                 ParameterAlias(
+
+#                     parameter_id=parameter.id,
+
+#                     alias=alias
+
+#                 )
+
+#             )
+
+#     db.session.commit()
+
+#     print("CBC Parameter Master Seeded Successfully.")
