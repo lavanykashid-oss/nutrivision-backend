@@ -11,6 +11,13 @@ from app.services.health_report_service import HealthReportService
 
 from app.services.report_comparison_service import ReportComparisonService
 
+import os
+
+from app.config.database import db
+
+from app.models.health_report import HealthReport
+from app.models.health_parameter import HealthParameter
+from app.models.health_analysis import HealthAnalysis
 
 health_report_bp = Blueprint(
     "health_report",
@@ -268,3 +275,68 @@ def get_reports():
         })
 
     return jsonify(response)
+
+@health_report_bp.route("/report/<int:report_id>", methods=["DELETE"])
+@jwt_required()
+def delete_health_report(report_id):
+
+    try:
+        user_id = get_jwt_identity()
+
+        report = HealthReport.query.filter_by(
+            id=report_id,
+            user_id=user_id
+        ).first()
+
+        if not report:
+            return jsonify({
+                "error": "Report not found"
+            }), 404
+
+        # --------------------------------------------------
+        # Delete child records first
+        # --------------------------------------------------
+
+        HealthParameter.query.filter_by(
+            report_id=report.id
+        ).delete(synchronize_session=False)
+
+        HealthAnalysis.query.filter_by(
+            report_id=report.id
+        ).delete(synchronize_session=False)
+
+        # --------------------------------------------------
+        # Delete physical uploaded file if it exists
+        # --------------------------------------------------
+
+        if report.file_path:
+            try:
+                if os.path.exists(report.file_path):
+                    os.remove(report.file_path)
+                    print("Deleted file:", report.file_path)
+            except Exception as file_error:
+                print("File deletion warning:", file_error)
+
+        # --------------------------------------------------
+        # Delete main report
+        # --------------------------------------------------
+
+        db.session.delete(report)
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "Report deleted successfully",
+            "report_id": report_id
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("DELETE REPORT ERROR:", str(e))
+
+        return jsonify({
+            "error": "Failed to delete report",
+            "details": str(e)
+        }), 500

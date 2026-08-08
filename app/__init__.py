@@ -47,13 +47,13 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
-    with app.app_context():
+    # with app.app_context():
 
-       if ParameterMaster.query.count() == 0:
+    # #    if ParameterMaster.query.count() == 0:
 
-          from seeds.seed_parameter_master import seed_parameters
+    #     from seeds.seed_parameter_master import seed_parameters
 
-          seed_parameters()
+    #     seed_parameters()
     print("SECRET_KEY =", app.config.get("SECRET_KEY"))
     print("JWT_SECRET_KEY =", app.config.get("JWT_SECRET_KEY"))
     jwt.init_app(app)
