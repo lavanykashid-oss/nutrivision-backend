@@ -48,7 +48,7 @@ class User(db.Model):
 
     gender = db.Column(db.String(20))
 
-    # height = db.Column(db.Float)
+    height = db.Column(db.Float)
 
     weight = db.Column(db.Float)
 

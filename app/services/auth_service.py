@@ -110,6 +110,7 @@ class AuthService:
         user.age = data.get("age")
         user.gender = data.get("gender")
         user.weight = data.get("weight")
+        user.height = data.get("height")
 
         # Update goal
         goal = UserGoal.query.filter_by(user_id=user.id).first()

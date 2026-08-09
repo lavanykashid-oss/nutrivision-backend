@@ -65,7 +65,7 @@ def profile():
     "age": user.age,
     # "dob": user.dob,
     "gender": user.gender,
-    # "height": user.height,
+    "height": user.height,
     "weight": user.weight,
     
 })

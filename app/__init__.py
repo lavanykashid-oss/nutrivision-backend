@@ -33,6 +33,7 @@ from app.models.meal_recipe import MealRecipe
 from app.models.diet_plan import DietPlan
 
 # flask db upgrade && gunicorn run:app
+# python seed_production.py && gunicorn run:app
 
 load_dotenv()
 jwt = JWTManager()
