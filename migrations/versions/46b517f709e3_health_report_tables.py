@@ -85,11 +85,11 @@ def upgrade():
     sa.ForeignKeyConstraint(['report_id'], ['health_reports.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    with op.batch_alter_table('users', schema=None) as batch_op:
-        batch_op.alter_column('gender',
-               existing_type=sa.VARCHAR(length=255),
-               type_=sa.String(length=20),
-               existing_nullable=True)
+    # with op.batch_alter_table('users', schema=None) as batch_op:
+    #     batch_op.alter_column('gender',
+    #            existing_type=sa.VARCHAR(length=255),
+    #            type_=sa.String(length=20),
+    #            existing_nullable=True)
 
     # ### end Alembic commands ###
 
