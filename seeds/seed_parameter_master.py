@@ -1669,12 +1669,24 @@ ADVANCED_PARAMETERS = [
         ]
     }
 ]
-
 def seed_parameters():
 
-    all_parameters = CBC_PARAMETERS + OTHER_PARAMETERS + MORE_PARAMETERS + LFT_PARAMETERS + THYROID_PARAMETERS + RENAL_PARAMETERS + URINE_PARAMETERS + ADVANCED_PARAMETERS
+    all_parameters = (
+        CBC_PARAMETERS
+        + OTHER_PARAMETERS
+        + MORE_PARAMETERS
+        + LFT_PARAMETERS
+        + THYROID_PARAMETERS
+        + RENAL_PARAMETERS
+        + URINE_PARAMETERS
+        + ADVANCED_PARAMETERS
+    )
 
     for item in all_parameters:
+
+        # ========================================================
+        # FIND / CREATE MASTER PARAMETER
+        # ========================================================
 
         existing = ParameterMaster.query.filter_by(
             parameter_name=item["name"]
@@ -1691,36 +1703,175 @@ def seed_parameters():
             )
 
             db.session.add(parameter)
+
             db.session.flush()
 
+            print(
+                f"Created parameter: "
+                f"{parameter.parameter_name}"
+            )
+
         else:
+
             parameter = existing
 
-        for alias in item["aliases"]:
+            # ----------------------------------------------------
+            # Update master information
+            # ----------------------------------------------------
 
-        # aliases = item.get("aliases")
+            parameter.category = item["category"]
 
-        # if not aliases:
-        #     aliases = generate_aliases(item["name"])
+            if item.get("unit") is not None:
+                parameter.unit = item.get("unit")
 
-        # for alias in aliases:
+            if item.get("min") is not None:
+                parameter.normal_min = item.get("min")
+
+            if item.get("max") is not None:
+                parameter.normal_max = item.get("max")
+
+        # ========================================================
+        # ADD ALIASES
+        # ========================================================
+
+        for alias in item.get("aliases", []):
+
+            alias = alias.strip()
+
+            if not alias:
+                continue
+
+            # ----------------------------------------------------
+            # Check alias for this parameter
+            # ----------------------------------------------------
 
             alias_exists = ParameterAlias.query.filter_by(
+                parameter_id=parameter.id,
                 alias=alias
             ).first()
 
-            if not alias_exists:
+            if alias_exists:
+                continue
 
-                db.session.add(
-                    ParameterAlias(
-                        parameter_id=parameter.id,
-                        alias=alias
-                    )
+            # ----------------------------------------------------
+            # Check whether alias already belongs to another
+            # parameter
+            # ----------------------------------------------------
+
+            conflicting_alias = ParameterAlias.query.filter(
+                ParameterAlias.alias.ilike(alias),
+                ParameterAlias.parameter_id != parameter.id
+            ).first()
+
+            if conflicting_alias:
+
+                print(
+                    "\nWARNING: Duplicate alias detected"
                 )
+
+                print(
+                    f"Alias      : {alias}"
+                )
+
+                print(
+                    f"Existing   : "
+                    f"{conflicting_alias.parameter.parameter_name}"
+                )
+
+                print(
+                    f"New        : "
+                    f"{parameter.parameter_name}"
+                )
+
+                # Don't automatically create ambiguous alias
+                continue
+
+            # ----------------------------------------------------
+            # Create alias
+            # ----------------------------------------------------
+
+            db.session.add(
+                ParameterAlias(
+                    parameter_id=parameter.id,
+                    alias=alias
+                )
+            )
+
+            print(
+                f"Added alias: "
+                f"{alias} -> "
+                f"{parameter.parameter_name}"
+            )
+
+    # ============================================================
+    # COMMIT
+    # ============================================================
 
     db.session.commit()
 
-    print("Parameter master seeded successfully.")
+    print(
+        "\n========================================"
+    )
+
+    print(
+        "Parameter master seeded successfully."
+    )
+
+    print(
+        "========================================"
+    )
+
+# def seed_parameters():
+
+#     all_parameters = CBC_PARAMETERS + OTHER_PARAMETERS + MORE_PARAMETERS + LFT_PARAMETERS + THYROID_PARAMETERS + RENAL_PARAMETERS + URINE_PARAMETERS + ADVANCED_PARAMETERS
+
+#     for item in all_parameters:
+
+#         existing = ParameterMaster.query.filter_by(
+#             parameter_name=item["name"]
+#         ).first()
+
+#         if not existing:
+
+#             parameter = ParameterMaster(
+#                 parameter_name=item["name"],
+#                 category=item["category"],
+#                 unit=item.get("unit"),
+#                 normal_min=item.get("min"),
+#                 normal_max=item.get("max")
+#             )
+
+#             db.session.add(parameter)
+#             db.session.flush()
+
+#         else:
+#             parameter = existing
+
+#         for alias in item["aliases"]:
+
+#         # aliases = item.get("aliases")
+
+#         # if not aliases:
+#         #     aliases = generate_aliases(item["name"])
+
+#         # for alias in aliases:
+
+#             alias_exists = ParameterAlias.query.filter_by(
+#                 alias=alias
+#             ).first()
+
+#             if not alias_exists:
+
+#                 db.session.add(
+#                     ParameterAlias(
+#                         parameter_id=parameter.id,
+#                         alias=alias
+#                     )
+#                 )
+
+#     db.session.commit()
+
+#     print("Parameter master seeded successfully.")
 
 
 # import re
