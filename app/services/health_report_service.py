@@ -136,7 +136,7 @@ from app.config.database import db
 
 from utils.ocr_service import OCRService
 from utils.report_parser import ReportParser
-from utils.claude_report_parser import ClaudeReportParser
+# from utils.claude_report_parser import ClaudeReportParser
 from app.models.health_parameter import HealthParameter
 from app.models.parameter_master import ParameterMaster
 
@@ -174,7 +174,7 @@ class HealthReportService:
         # PARSE REPORT
         # ========================================================
 
-        parsed = ClaudeReportParser.parse_report(text)
+        parsed = ReportParser.parse_report(text)
 
         metadata = parsed["metadata"]
         extracted_parameters = parsed["parameters"]

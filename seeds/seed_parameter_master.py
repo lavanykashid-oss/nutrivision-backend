@@ -402,7 +402,10 @@ MORE_PARAMETERS = [
     "category": "Lipid Profile",
     "aliases": [
         "LDL/HDL ratio",
-        "LDL HDL Ratio"
+        "LDL HDL Ratio",
+        "LDL/HDL",
+        "LDL / HDL",
+        "LDL HDL",
     ]
 },
 {
@@ -449,6 +452,11 @@ LFT_PARAMETERS = [
             "Albumin/Globulin",
             "A/G Ratio",
             "AG Ratio",
+            # Albumin / Globulin Ratio
+"SERUM ALB/GLOBULIN RATIO",
+"SERUM ALBUMIN/GLOBULIN RATIO",
+"ALB/GLOBULIN RATIO",
+"ALB/GLOB RATIO",
             "A:G Ratio"
         ]
     },
@@ -639,7 +647,11 @@ RENAL_PARAMETERS = [
             "BUN/Creatinine Ratio",
             "BUN Creatinine Ratio",
             "BUN/Creatinine",
-            "BUN Creatinine"
+            "BUN Creatinine",
+            "BUN / SR.CREATININE RATIO",
+"BUN/SR.CREATININE RATIO",
+"BUN / SERUM CREATININE RATIO",
+"BUN SERUM CREATININE RATIO",
         ]
     },
 
@@ -652,7 +664,11 @@ RENAL_PARAMETERS = [
         "aliases": [
             "Urea/Creatinine Ratio",
             "Urea Creatinine Ratio",
-            "Urea/Creatinine"
+            "Urea/Creatinine",
+            "UREA / SR.CREATININE RATIO",
+"UREA/SR.CREATININE RATIO",
+"UREA / SERUM CREATININE RATIO",
+"UREA SERUM CREATININE RATIO",
         ]
     },
 
@@ -1669,6 +1685,376 @@ ADVANCED_PARAMETERS = [
         ]
     }
 ]
+
+MISSING_PARAMETERS = [
+
+    # ============================================================
+    # DIABETIC SCREENING
+    # ============================================================
+
+    {
+        "name": "Postprandial Blood Sugar (PPBS)",
+        "category": "Diabetic Screening",
+        "unit": "mg/dL",
+        "min": 70,
+        "max": 140,
+        "aliases": [
+            "Postprandial Blood Sugar (PPBS)",
+            "Postprandial Blood Sugar",
+            "Post Prandial Blood Sugar",
+            "Postprandial Blood Glucose",
+            "Post Prandial Blood Glucose",
+            "PPBS",
+            "PP Blood Sugar",
+            "PP Blood Glucose",
+            "Blood Sugar PP",
+            "Blood Glucose PP",
+            "POSTPRANDIAL BLOOD SUGAR(GLUCOSE)"
+        ]
+    },
+
+
+    # ============================================================
+    # LIPID PROFILE
+    # ============================================================
+
+    {
+        "name": "Non-HDL Cholesterol",
+        "category": "Lipid Profile",
+        "unit": "mg/dL",
+        "min": None,
+        "max": 130,
+        "aliases": [
+            "Non-HDL Cholesterol",
+            "Non HDL Cholesterol",
+            "Non-HDL",
+            "Non HDL",
+            "NON-HDL CHOLESTEROL"
+        ]
+    },
+
+    {
+        "name": "HDL/LDL Ratio",
+        "category": "Lipid Profile",
+        "unit": "Ratio",
+        "min": None,
+        "max": None,
+        "aliases": [
+            "HDL/LDL Ratio",
+            "HDL LDL Ratio",
+            "HDL / LDL RATIO",
+            "HDL to LDL Ratio"
+        ]
+    },
+
+    {
+        "name": "Total Cholesterol/HDL Ratio",
+        "category": "Lipid Profile",
+        "unit": "Ratio",
+        "min": None,
+        "max": None,
+        "aliases": [
+            "Total Cholesterol/HDL Ratio",
+            "Total Cholesterol HDL Ratio",
+            "TC/HDL Ratio",
+            "TC HDL Ratio",
+            "TC / HDL CHOLESTEROL RATIO",
+            "TC/HDL CHOLESTEROL RATIO",
+            "TOTAL CHOLESTEROL / HDL",
+            "TOTAL CHOLESTEROL/HDL",
+            "TOTAL CHOLESTEROL HDL",
+            "Cholesterol HDL Ratio"
+        ]
+    },
+
+    {
+        "name": "Triglycerides/HDL Ratio",
+        "category": "Lipid Profile",
+        "unit": "Ratio",
+        "min": None,
+        "max": None,
+        "aliases": [
+            "Triglycerides/HDL Ratio",
+            "Triglyceride HDL Ratio",
+            "Triglycerides HDL Ratio",
+            "TG/HDL Ratio",
+            "TG HDL Ratio",
+            "TRIG / HDL RATIO",
+            "TG / HDL",
+            "TG/HDL",
+        "TG HDL",
+            "TRIG/HDL RATIO"
+        ]
+    },
+
+
+    # ============================================================
+    # LIVER FUNCTION TEST
+    # ============================================================
+
+    {
+        "name": "Bilirubin Indirect",
+        "category": "Liver Function Test",
+        "unit": "mg/dL",
+        "min": 0.0,
+        "max": 0.9,
+        "aliases": [
+            "Bilirubin Indirect",
+            "Indirect Bilirubin",
+            "Bilirubin (Indirect)",
+            "BILIRUBIN (INDIRECT)",
+            "Unconjugated Bilirubin",
+            "Indirect Serum Bilirubin"
+        ]
+    },
+
+    {
+        "name": "Gamma Glutamyl Transferase (GGT)",
+        "category": "Liver Function Test",
+        "unit": "U/L",
+        "min": 5,
+        "max": 40,
+        "aliases": [
+            "Gamma Glutamyl Transferase (GGT)",
+            "Gamma Glutamyl Transferase",
+            "Gamma-Glutamyl Transferase",
+            "Gamma Glutamyl Transpeptidase",
+            "Gamma-GT",
+            "GGT",
+            "GGTP",
+            "GAMMA GLUTAMYL TRANSFERASE (GGT)"
+        ]
+    },
+
+    {
+        "name": "Total Protein",
+        "category": "Liver Function Test",
+        "unit": "g/dL",
+        "min": 6.5,
+        "max": 8.1,
+        "aliases": [
+            "Total Protein",
+            "Protein Total",
+            "Total Serum Protein",
+            "Serum Total Protein",
+            "Serum Protein Total",
+            "PROTEIN - TOTAL",
+            "PROTEIN TOTAL"
+        ]
+    },
+
+    {
+        "name": "Albumin",
+        "category": "Liver Function Test",
+        "unit": "g/dL",
+        "min": 3.4,
+        "max": 5.4,
+        "aliases": [
+            "Albumin",
+            "Serum Albumin",
+            "Albumin Serum",
+            "ALBUMIN - SERUM",
+            "SERUM ALBUMIN",
+            "ALB"
+        ]
+    },
+
+
+    # ============================================================
+    # CBC - DIFFERENTIAL / ABSOLUTE COUNTS
+    # ============================================================
+
+    {
+        "name": "Immature Granulocyte Percentage",
+        "category": "CBC",
+        "unit": "%",
+        "min": 0.0,
+        "max": 0.5,
+        "aliases": [
+            "Immature Granulocyte Percentage",
+            "Immature Granulocyte %",
+            "Immature Granulocytes Percentage",
+            "IG%",
+            "IG %",
+            "IMMATURE GRANULOCYTE PERCENTAGE(IG%)"
+        ]
+    },
+
+    {
+        "name": "Neutrophils Absolute Count",
+        "category": "CBC",
+        "unit": "X 10³/µL",
+        "min": 2.0,
+        "max": 7.0,
+        "aliases": [
+            "Neutrophils Absolute Count",
+            "Absolute Neutrophil Count",
+            "Neutrophil Absolute Count",
+            "ANC",
+            "NEUTROPHILS - ABSOLUTE COUNT"
+        ]
+    },
+
+    {
+        "name": "Lymphocytes Absolute Count",
+        "category": "CBC",
+        "unit": "X 10³/µL",
+        "min": 1.0,
+        "max": 3.0,
+        "aliases": [
+            "Lymphocytes Absolute Count",
+            "Absolute Lymphocyte Count",
+            "Lymphocyte Absolute Count",
+            "ALC",
+            "LYMPHOCYTES - ABSOLUTE COUNT"
+        ]
+    },
+
+    {
+        "name": "Monocytes Absolute Count",
+        "category": "CBC",
+        "unit": "X 10³/µL",
+        "min": 0.2,
+        "max": 1.0,
+        "aliases": [
+            "Monocytes Absolute Count",
+            "Absolute Monocyte Count",
+            "Monocyte Absolute Count",
+            "MONOCYTES - ABSOLUTE COUNT"
+        ]
+    },
+
+    {
+        "name": "Eosinophils Absolute Count",
+        "category": "CBC",
+        "unit": "X 10³/µL",
+        "min": 0.0,
+        "max": 0.5,
+        "aliases": [
+            "Eosinophils Absolute Count",
+            "Absolute Eosinophil Count",
+            "Eosinophil Absolute Count",
+            "EOSINOPHILS - ABSOLUTE COUNT"
+        ]
+    },
+
+    {
+        "name": "Basophils Absolute Count",
+        "category": "CBC",
+        "unit": "X 10³/µL",
+        "min": 0.0,
+        "max": 0.1,
+        "aliases": [
+            "Basophils Absolute Count",
+            "Absolute Basophil Count",
+            "Basophil Absolute Count",
+            "BASOPHILS - ABSOLUTE COUNT"
+        ]
+    },
+
+    {
+        "name": "Immature Granulocytes Absolute Count",
+        "category": "CBC",
+        "unit": "X 10³/µL",
+        "min": 0.0,
+        "max": 0.3,
+        "aliases": [
+            "Immature Granulocytes Absolute Count",
+            "Immature Granulocyte Absolute Count",
+            "Absolute Immature Granulocyte Count",
+            "IG Absolute",
+            "IG#",
+            "IMMATURE GRANULOCYTES(IG)"
+        ]
+    },
+
+
+    # ============================================================
+    # CBC - RBC / PLATELET INDICES
+    # ============================================================
+
+    {
+        "name": "RDW-SD",
+        "category": "CBC",
+        "unit": "fL",
+        "min": 39.0,
+        "max": 46.0,
+        "aliases": [
+            "RDW-SD",
+            "RDW SD",
+            "Red Cell Distribution Width SD",
+            "Red Cell Distribution Width - SD",
+            "RED CELL DISTRIBUTION WIDTH - SD(RDW-SD)"
+        ]
+    },
+
+    {
+        "name": "Platelet Distribution Width (PDW)",
+        "category": "CBC",
+        "unit": "fL",
+        "min": 9.6,
+        "max": 15.2,
+        "aliases": [
+            "Platelet Distribution Width",
+            "Platelet Distribution Width (PDW)",
+            "PDW",
+            "PLATELET DISTRIBUTION WIDTH(PDW)"
+        ]
+    },
+
+    {
+        "name": "Mean Platelet Volume (MPV)",
+        "category": "CBC",
+        "unit": "fL",
+        "min": None,
+        "max": None,
+        "aliases": [
+            "Mean Platelet Volume",
+            "Mean Platelet Volume (MPV)",
+            "MPV",
+            "MEAN PLATELET VOLUME(MPV)"
+        ]
+    },
+
+
+    # ============================================================
+    # URINE ANALYSIS
+    # ============================================================
+
+    {
+        "name": "Urine pH",
+        "category": "Urine Analysis",
+        "unit": None,
+        "min": 5.0,
+        "max": 8.0,
+        "aliases": [
+            "Urine pH",
+            "Urinary pH",
+            "Urine PH",
+            "PH"
+        ]
+    },
+
+    {
+        "name": "Urine Ketone",
+        "category": "Urine Analysis",
+        "unit": "mg/dL",
+        "min": None,
+        "max": None,
+        "aliases": [
+            "Urine Ketone",
+            "Urinary Ketone",
+            "Urine Ketones",
+            "Urinary Ketones",
+            "Ketone Urine",
+            "URINE KETONE"
+        ]
+    }
+
+
+
+
+]
 def seed_parameters():
 
     all_parameters = (
@@ -1680,6 +2066,7 @@ def seed_parameters():
         + RENAL_PARAMETERS
         + URINE_PARAMETERS
         + ADVANCED_PARAMETERS
+        + MISSING_PARAMETERS
     )
 
     for item in all_parameters:
