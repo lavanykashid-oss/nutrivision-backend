@@ -217,8 +217,20 @@ class LocalResultExtractor:
                     result["value"],
 
                 "unit":
+                (
+                    None
+                    if result.get("value_type") == "qualitative"
+                    else (
+                    
                     result.get("unit")
                     or candidate.get("unit"),
+                    )
+                ),
+                "value_type":
+                result.get(
+                    "value_type",
+                    "numeric"
+                ),
 
                 "matched_alias":
                     matched_alias,
@@ -252,6 +264,10 @@ class LocalResultExtractor:
         return extracted, unresolved
 
     # ============================================================
+    # EXTRACT VALUE FROM A SINGLE RESULT ROW
+    # ============================================================
+
+       # ============================================================
     # EXTRACT VALUE FROM A SINGLE RESULT ROW
     # ============================================================
 
@@ -291,9 +307,7 @@ class LocalResultExtractor:
         ):
             return None
 
-        if lower.startswith(
-            "method"
-        ):
+        if lower.startswith("method"):
             return None
 
         # --------------------------------------------------------
@@ -302,9 +316,8 @@ class LocalResultExtractor:
 
         pattern = re.compile(
             r"^\s*"
-            + re.escape(
-                matched_alias
-            ),
+            + re.escape(matched_alias)
+            + r"\s*",
             re.IGNORECASE
         )
 
@@ -314,9 +327,12 @@ class LocalResultExtractor:
             count=1
         ).strip()
 
-        # --------------------------------------------------------
-        # Extract first numeric value
-        # --------------------------------------------------------
+        if not working_line:
+            return None
+
+        # ========================================================
+        # 1. TRY NUMERIC EXTRACTION FIRST
+        # ========================================================
 
         numbers = re.findall(
             r"(?<![A-Za-z])"
@@ -324,89 +340,168 @@ class LocalResultExtractor:
             working_line
         )
 
-        if not numbers:
-            return None
+        if numbers:
 
-        try:
+            try:
+                value = float(numbers[0])
+            except ValueError:
+                value = None
 
-            value = float(
-                numbers[0]
+            if value is not None:
+
+                # ------------------------------------------------
+                # Detect unit
+                # ------------------------------------------------
+
+                unit_patterns = [
+                    r"mL/min/1\.73\s*m(?:2|²)",
+                    r"X\s*10[³3]\s*/\s*µL",
+                    r"X\s*10\^?6\s*/\s*µL",
+                    r"lakhs/cumm",
+                    r"lakh/cumm",
+                    r"million/cumm",
+                    r"Cells/ul",
+                    r"/HPF",
+                    r"/LPF",
+                    r"µIU/ml",
+                    r"uIU/ml",
+                    r"µg/dl",
+                    r"ug/dl",
+                    r"ng/dl",
+                    r"ng/ml",
+                    r"pg/ml",
+                    r"mg/dl",
+                    r"mg/l",
+                    r"gm/dl",
+                    r"g/dl",
+                    r"U/L",
+                    r"fL",
+                    r"pg",
+                    r"%",
+                    r"Ratio",
+                    r"\bmL\b"
+                ]
+
+                unit = None
+
+                for unit_pattern in unit_patterns:
+
+                    match = re.search(
+                        unit_pattern,
+                        working_line,
+                        re.IGNORECASE
+                    )
+
+                    if match:
+                        unit = match.group(0)
+                        break
+
+                return {
+                    "value": value,
+                    "unit": unit,
+                    "value_type": "numeric"
+                }
+
+        # ========================================================
+        # 2. TRY QUALITATIVE EXTRACTION
+        # ========================================================
+
+        qualitative_value = (
+            LocalResultExtractor.extract_qualitative_value(
+                working_line
             )
+        )
 
-        except ValueError:
+        if qualitative_value:
 
+            return {
+                "value": qualitative_value,
+                "unit": None,
+                "value_type": "qualitative"
+            }
+
+        # ========================================================
+        # NOTHING COULD BE EXTRACTED LOCALLY
+        # ========================================================
+
+        return None
+
+
+        # ============================================================
+    # EXTRACT QUALITATIVE / TEXT RESULT
+    # ============================================================
+
+    @staticmethod
+    def extract_qualitative_value(text):
+
+        if not text:
             return None
 
-        # --------------------------------------------------------
-        # Detect unit
-        #
+        text_normalized = re.sub(
+            r"\s+",
+            " ",
+            text.strip()
+        ).lower()
+
         # IMPORTANT:
-        # Specific units must be before generic ones.
-        # --------------------------------------------------------
+        # Longer / more specific values should come first.
+        qualitative_values = [
+            "pale yellow",
+            "light yellow",
+            "dark yellow",
+            "straw yellow",
+            "straw coloured",
+            "straw colored",
+            "yellow",
+            "colourless",
+            "colorless",
 
-        unit_patterns = [
+            "not detected",
+            "non reactive",
+            "non-reactive",
 
-            r"mL/min/1\.73\s*m(?:2|²)",
+            "strongly positive",
+            "moderately positive",
+            "weakly positive",
 
-            r"X\s*10[³3]\s*/\s*µL",
-            r"X\s*10\^?6\s*/\s*µL",
+            "negative",
+            "positive",
 
-            r"million/cumm",
+            "absent",
+            "present",
 
-            r"Cells/ul",
+            "clear",
+            "slightly cloudy",
+            "cloudy",
+            "turbid",
 
-            r"/HPF",
-            r"/LPF",
+            "nil",
+            "trace",
+            "normal",
 
-            r"µIU/ml",
-            r"uIU/ml",
-
-            r"µg/dl",
-            r"ug/dl",
-
-            r"ng/dl",
-            r"ng/ml",
-
-            r"pg/ml",
-
-            r"mg/dl",
-            r"mg/l",
-
-            r"gm/dl",
-            r"g/dl",
-
-            r"U/L",
-
-            r"fL",
-
-            r"pg",
-
-            r"%",
-
-            r"Ratio",
-
-            r"\bmL\b"
+            "occasional",
+            "few",
+            "moderate",
+            "many"
         ]
 
-        unit = None
+        for qualitative_value in qualitative_values:
 
-        for unit_pattern in unit_patterns:
+            pattern = (
+                r"\b"
+                + re.escape(qualitative_value)
+                + r"\b"
+            )
 
             match = re.search(
-                unit_pattern,
-                working_line,
+                pattern,
+                text_normalized,
                 re.IGNORECASE
             )
 
             if match:
+                return match.group(0).upper()
 
-                unit = match.group(
-                    0
-                )
+        return None
 
-                break
-
-        return {
-            "value": value,
-            "unit": unit
-        }
+    

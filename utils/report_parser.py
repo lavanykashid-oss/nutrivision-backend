@@ -328,6 +328,8 @@ class ReportParser:
                 # Numeric strings
                 # ------------------------------------------------
 
+                value_type= "numeric"
+
                 if isinstance(
                     value,
                     str
@@ -340,7 +342,7 @@ class ReportParser:
                     if not value:
                         continue
 
-                    value = (
+                    numeric_value = (
                         value.replace(
                             ",",
                             ""
@@ -350,24 +352,82 @@ class ReportParser:
                     try:
 
                         value = float(
-                            value
+                            numeric_value
                         )
 
                     except ValueError:
+                        qualitative_values = {
+                            "ABSENT",
+                            "PRESENT",
+                            "NEGATIVE",
+                            "POSITIVE",
+                            "CLEAR",
+                            "PALE YELLOW",
+                            "LIGHT YELLOW",
+                            "DARK YELLOW",
+                            "YELLOW",
+                            "STRAW YELLOW",
+                            "COLOURLESS",
+                            "COLORLESS",
+                            "TRACE",
+                            "NIL",
+                            "NORMAL",
+                            "OCCASIONAL",
+                            "FEW",
+                            "MODERATE",
+                            "MANY",
+                            "CLOUDY",
+                            "SLIGHTLY CLOUDY",
+                            "TURBID",
+                            "NON REACTIVE",
+                            "NON-REACTIVE",
+                            "NOT DETECTED"
+                        }
 
-                        print(
-                            "Skipping "
-                            "non-numeric value:",
-                            value
+                        normalized_value = (
+                            value.upper()
                         )
 
-                        continue
+                        if (
+                            normalized_value
+                            not in qualitative_values
+                        ):
 
-                if not isinstance(
-                    value,
-                    (int, float)
+                            print(
+                                "Skipping unsupported "
+                                "non-numeric value:",
+                                value
+                            )
+
+                            continue
+
+                        value = normalized_value
+                        value_type = "qualitative"
+
+                elif isinstance(
+                      value,
+                      (int, float)
                 ):
+
+                    value = float(value)
+
+                else:
+
                     continue
+
+                        # print(
+                        #     "Skipping "
+                        #     "non-numeric value:",
+                        #     value
+                        # )
+
+                      
+
+                # if not isinstance(
+                #     value,
+                #     (int, float)
+                # ):
+                #     continue
 
                 # ------------------------------------------------
                 # MERGE CLAUDE RESULT
@@ -384,7 +444,10 @@ class ReportParser:
                         parameter_id,
 
                     "value":
-                        float(value),
+                        value,
+
+                    "value_type":
+                        value_type,
 
                     "matched_alias":
                         candidate.get(
@@ -392,12 +455,21 @@ class ReportParser:
                         ),
 
                     "unit":
+                      (
+                        None
+                        if value_type == "qualitative"
+                        else (
+
+                        
                         item.get(
                             "unit"
                         )
                         or candidate.get(
                             "unit"
-                        ),
+                        
+                        )
+                      )
+                    ),
 
                     "source":
                         "claude"
@@ -491,13 +563,17 @@ class ReportParser:
 Rules:
 - Use only candidate IDs below.
 - Value must belong to the test row.
+- Value may be numeric or an explicit qualitative result such as ABSENT, PRESENT, NEGATIVE, POSITIVE, CLEAR or TRACE.
 - Ignore reference ranges, dates, IDs, methods and notes.
 - Do not calculate or infer.
 - If uncertain, omit.
 - Return JSON only.
 
-Format:
+Numeric format:
 {{"parameters":[{{"parameter_id":1,"value":13.5,"unit":"g/dL"}}]}}
+
+Qualitative format:
+{{"parameters":[{{"parameter_id":53,"value":"ABSENT","unit":null}}]}}
 
 Candidates:
 {candidate_json}
