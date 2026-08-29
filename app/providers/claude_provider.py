@@ -56,6 +56,7 @@ class ClaudeProvider:
     # ============================================================
 
     def generate_text(self, prompt):
+        
 
         try:
 
@@ -112,6 +113,8 @@ class ClaudeProvider:
 
     def generate_json(self, prompt, image=None):
 
+        client = None
+
         try:
 
             # ====================================================
@@ -166,7 +169,11 @@ class ClaudeProvider:
                 "Sending request to Claude..."
             )
 
-            response = self.client.messages.create(
+            client = Anthropic(
+                api_key=os.getenv("ANTHROPIC_API_KEY")
+            )
+
+            response = client.messages.create(
 
                 model="claude-sonnet-5",
 
@@ -374,6 +381,8 @@ class ClaudeProvider:
 
             print("=" * 60)
 
+           
+
             return result
 
         # ========================================================
@@ -399,5 +408,15 @@ class ClaudeProvider:
             print("=" * 60)
 
             return None
+
+        finally:
+
+            if client is not None:
+
+                try:
+
+                    client.close()
+                except Exception:
+                    pass 
         
 
