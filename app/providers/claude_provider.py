@@ -7,68 +7,10 @@ from anthropic import Anthropic
 from PIL import Image
 from io import BytesIO
 
-try:
-    import resource
-except ImportError:
-    resource = None
-
 
 class ClaudeProvider:
 
-    # ============================================================
-    # MEMORY LOGGER
-    # ============================================================
-
-    def log_memory(self, label):
-
-        try:
-            current_mb = None
-            peak_mb = None
-            cgroup_mb = None
-            limit_mb = None
-
-        # Current + peak process RSS
-            with open("/proc/self/status", "r") as f:
-                for line in f:
-
-                    if line.startswith("VmRSS:"):
-                        current_mb = int(line.split()[1]) / 1024
- 
-                    elif line.startswith("VmHWM:"):
-                       peak_mb = int(line.split()[1]) / 1024
-
-        # Render/container current memory
-            try:
-                with open("/sys/fs/cgroup/memory.current", "r") as f:
-                    cgroup_mb = int(f.read().strip()) / 1024 / 1024
-            except Exception:
-                pass
-
-        # Render/container memory limit
-            try:
-                with open("/sys/fs/cgroup/memory.max", "r") as f:
-                    value = f.read().strip()
-
-                    if value != "max":
-                       limit_mb = int(value) / 1024 / 1024
-            except Exception:
-                pass
-
-            print(
-            f"[MEMORY] {label} | "
-            f"RSS={current_mb:.2f} MB | "
-            f"PEAK={peak_mb:.2f} MB | "
-            f"CGROUP={cgroup_mb:.2f} MB | "
-            f"LIMIT={limit_mb:.2f} MB",
-            flush=True
-        )
-
-        except Exception as e:
-
-         print(
-            f"[MEMORY] {label} | unable to read memory: {e}",
-            flush=True
-        )
+    
     # ============================================================
     # INITIALIZE PROVIDER
     # ============================================================
@@ -252,9 +194,7 @@ class ClaudeProvider:
                 )
             )
 
-            self.log_memory(
-                "before Claude call"
-            )
+           
 
             response = (
                 client.messages.create(
@@ -269,9 +209,7 @@ class ClaudeProvider:
                 )
             )
 
-            self.log_memory(
-                "after Claude call"
-            )
+           
 
             # ====================================================
             # TOKEN USAGE
@@ -540,9 +478,7 @@ class ClaudeProvider:
 
                     client.close()
 
-                    self.log_memory(
-                        "after client close"
-                    )
+                    
 
                 except Exception as e:
 
