@@ -7,13 +7,48 @@ from anthropic import Anthropic
 from PIL import Image
 from io import BytesIO
 
+try:
+    import resource
+except ImportError:
+    resource = None
+
 
 class ClaudeProvider:
 
+    # ============================================================
+    # MEMORY LOGGER
+    # ============================================================
+
+    def log_memory(self, label):
+
+        if resource is None:
+            print(
+                f"[MEMORY] {label}: "
+                f"unavailable on this OS"
+            )
+            return
+
+        usage = resource.getrusage(
+            resource.RUSAGE_SELF
+        ).ru_maxrss
+
+        print(
+            f"[MEMORY] {label}: "
+            f"{usage / 1024:.2f} MB"
+        )
+
+    # ============================================================
+    # INITIALIZE PROVIDER
+    # ============================================================
+
     def __init__(self):
 
-        print("AI Provider:", os.getenv("AI_PROVIDER"))
+        print(
+            "AI Provider:",
+            os.getenv("AI_PROVIDER")
+        )
 
+        # Keep this client because generate_text() uses it.
         self.client = Anthropic(
             api_key=os.getenv("ANTHROPIC_API_KEY")
         )
@@ -31,8 +66,10 @@ class ClaudeProvider:
         if img.mode != "RGB":
             img = img.convert("RGB")
 
-        # Resize image to reduce token usage
-        img.thumbnail((1024, 1024))
+        # Resize image to reduce token usage.
+        img.thumbnail(
+            (1024, 1024)
+        )
 
         buffer = BytesIO()
 
@@ -43,7 +80,9 @@ class ClaudeProvider:
             optimize=True
         )
 
-        image_bytes = buffer.getvalue()
+        image_bytes = (
+            buffer.getvalue()
+        )
 
         image.seek(0)
 
@@ -56,31 +95,31 @@ class ClaudeProvider:
     # ============================================================
 
     def generate_text(self, prompt):
-        
 
         try:
 
-            response = self.client.messages.create(
-
-                model="claude-sonnet-5",
-
-                max_tokens=4096,
-
-                temperature=0,
-
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
+            response = (
+                self.client.messages.create(
+                    model="claude-sonnet-5",
+                    max_tokens=4096,
+                    temperature=0,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                )
             )
 
             text_parts = []
 
             for block in response.content:
 
-                if hasattr(block, "text"):
+                if hasattr(
+                    block,
+                    "text"
+                ):
 
                     text_parts.append(
                         block.text
@@ -95,7 +134,9 @@ class ClaudeProvider:
         except Exception as e:
 
             print("=" * 60)
-            print("CLAUDE TEXT API ERROR")
+            print(
+                "CLAUDE TEXT API ERROR"
+            )
             print("=" * 60)
 
             print(
@@ -111,7 +152,11 @@ class ClaudeProvider:
     # GENERATE JSON
     # ============================================================
 
-    def generate_json(self, prompt, image=None):
+    def generate_json(
+        self,
+        prompt,
+        image=None
+    ):
 
         client = None
 
@@ -124,41 +169,39 @@ class ClaudeProvider:
             if image:
 
                 print(
-                    "Claude Vision: Processing image..."
+                    "Claude Vision: "
+                    "Processing image..."
                 )
 
-                image_data = self.encode_image(
-                    image
+                image_data = (
+                    self.encode_image(
+                        image
+                    )
                 )
 
                 content = [
-
                     {
                         "type": "image",
-
                         "source": {
                             "type": "base64",
-                            "media_type": "image/jpeg",
+                            "media_type":
+                                "image/jpeg",
                             "data": image_data
                         }
                     },
-
                     {
                         "type": "text",
                         "text": prompt
                     }
-
                 ]
 
             else:
 
                 content = [
-
                     {
                         "type": "text",
                         "text": prompt
                     }
-
                 ]
 
             # ====================================================
@@ -166,27 +209,36 @@ class ClaudeProvider:
             # ====================================================
 
             print(
-                "Sending request to Claude..."
+                "Sending request "
+                "to Claude..."
             )
 
+            # Create a temporary client for this JSON call.
             client = Anthropic(
-                api_key=os.getenv("ANTHROPIC_API_KEY")
+                api_key=os.getenv(
+                    "ANTHROPIC_API_KEY"
+                )
             )
 
-            response = client.messages.create(
+            self.log_memory(
+                "before Claude call"
+            )
 
-                model="claude-sonnet-5",
+            response = (
+                client.messages.create(
+                    model="claude-sonnet-5",
+                    max_tokens=1024,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": content
+                        }
+                    ]
+                )
+            )
 
-                max_tokens=1024,
-
-                
-
-                messages=[
-                    {
-                        "role": "user",
-                        "content": content
-                    }
-                ]
+            self.log_memory(
+                "after Claude call"
             )
 
             # ====================================================
@@ -202,25 +254,34 @@ class ClaudeProvider:
             )
 
             input_cost = (
-                input_tokens / 1_000_000
+                input_tokens
+                / 1_000_000
             ) * 3
 
             output_cost = (
-                output_tokens / 1_000_000
+                output_tokens
+                / 1_000_000
             ) * 15
 
             total_cost = (
-                input_cost +
-                output_cost
+                input_cost
+                + output_cost
             )
 
             print("=" * 60)
             print("Claude Usage")
-            print("Input Tokens :", input_tokens)
-            print("Output Tokens:", output_tokens)
+            print(
+                "Input Tokens :",
+                input_tokens
+            )
+            print(
+                "Output Tokens:",
+                output_tokens
+            )
 
             print(
-                f"Estimated Cost: ${total_cost:.6f}"
+                f"Estimated Cost: "
+                f"${total_cost:.6f}"
             )
 
             print("=" * 60)
@@ -233,7 +294,10 @@ class ClaudeProvider:
 
             for block in response.content:
 
-                if hasattr(block, "text"):
+                if hasattr(
+                    block,
+                    "text"
+                ):
 
                     text_parts.append(
                         block.text
@@ -248,10 +312,14 @@ class ClaudeProvider:
             # ====================================================
 
             print("=" * 60)
-            print("RAW CLAUDE RESPONSE")
+            print(
+                "RAW CLAUDE RESPONSE"
+            )
             print("=" * 60)
 
-            print(repr(text))
+            print(
+                repr(text)
+            )
 
             print("=" * 60)
 
@@ -262,7 +330,8 @@ class ClaudeProvider:
             if not text:
 
                 print(
-                    "ERROR: Claude returned EMPTY response"
+                    "ERROR: Claude returned "
+                    "EMPTY response"
                 )
 
                 return None
@@ -273,19 +342,25 @@ class ClaudeProvider:
 
             text = text.strip()
 
-            if text.startswith("```json"):
+            if text.startswith(
+                "```json"
+            ):
 
                 text = text[
                     len("```json"):
                 ].strip()
 
-            elif text.startswith("```"):
+            elif text.startswith(
+                "```"
+            ):
 
                 text = text[
                     len("```"):
                 ].strip()
 
-            if text.endswith("```"):
+            if text.endswith(
+                "```"
+            ):
 
                 text = text[
                     :-3
@@ -298,11 +373,15 @@ class ClaudeProvider:
             start = text.find("{")
             end = text.rfind("}")
 
-            if start == -1 or end == -1:
+            if (
+                start == -1
+                or end == -1
+            ):
 
                 print(
-                    "ERROR: No JSON object found "
-                    "in Claude response"
+                    "ERROR: No JSON "
+                    "object found in "
+                    "Claude response"
                 )
 
                 print(
@@ -330,7 +409,10 @@ class ClaudeProvider:
             except json.JSONDecodeError as e:
 
                 print("=" * 60)
-                print("CLAUDE JSON PARSE ERROR")
+                print(
+                    "CLAUDE JSON "
+                    "PARSE ERROR"
+                )
                 print("=" * 60)
 
                 print(
@@ -360,7 +442,8 @@ class ClaudeProvider:
             ):
 
                 print(
-                    "ERROR: Claude JSON is not an object"
+                    "ERROR: Claude JSON "
+                    "is not an object"
                 )
 
                 return None
@@ -370,18 +453,20 @@ class ClaudeProvider:
             # ====================================================
 
             print("=" * 60)
+
             print(
-                "Claude JSON parsed successfully"
+                "Claude JSON parsed "
+                "successfully"
             )
 
             print(
                 "JSON keys:",
-                list(result.keys())
+                list(
+                    result.keys()
+                )
             )
 
             print("=" * 60)
-
-           
 
             return result
 
@@ -392,7 +477,9 @@ class ClaudeProvider:
         except Exception as e:
 
             print("=" * 60)
-            print("CLAUDE API ERROR")
+            print(
+                "CLAUDE API ERROR"
+            )
             print("=" * 60)
 
             print(
@@ -409,6 +496,10 @@ class ClaudeProvider:
 
             return None
 
+        # ========================================================
+        # CLEANUP TEMPORARY CLIENT
+        # ========================================================
+
         finally:
 
             if client is not None:
@@ -416,7 +507,15 @@ class ClaudeProvider:
                 try:
 
                     client.close()
-                except Exception:
-                    pass 
-        
 
+                    self.log_memory(
+                        "after client close"
+                    )
+
+                except Exception as e:
+
+                    print(
+                        "Claude client close "
+                        "warning:",
+                        str(e)
+                    )
